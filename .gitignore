@@ -1,3 +1,4 @@
-__pycache__/        # 整个 __pycache__ 文件夹，全部忽略
-*.pyc               # 所有 .pyc 文件（编译缓存）
-.env                # 名为 .env 的文件，通常是存密钥的
+__pycache__/
+*.pyc
+.env
+tempCodeRunnerFile.py
