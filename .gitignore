@@ -3,3 +3,4 @@ __pycache__/
 .env
 tempCodeRunnerFile.py
 chat_history.json
+.vscode/
