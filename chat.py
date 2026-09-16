@@ -7,6 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("DEEPSEEK_API_KEY")
 
+def calc_cost(prompt_tokens, completion_tokens):
+    input_price = 0.02/1e6
+    output_price = 4/1e6
+    total_price = prompt_tokens * input_price + completion_tokens * output_price
+    return total_price
+
 def ask(prompt,max_retries=3):
     url = "https://api.deepseek.com/chat/completions"
     headers = {
@@ -25,6 +31,9 @@ def ask(prompt,max_retries=3):
             response = requests.post(url, headers=headers, json=data)
             response.raise_for_status()
             response_dict = response.json()
+            usage = response_dict['usage']
+            print(f"输入 {usage['prompt_tokens']} tokens,输出 {usage['completion_tokens']} tokens,总计 {usage['total_tokens']} tokens, 总费用: ¥{calc_cost(usage['prompt_tokens'], usage['completion_tokens']):.6f}")
+            
             return response_dict['choices'][0]['message']['content']
         except requests.RequestException as e:
             status =  response.status_code if response is not None else None
