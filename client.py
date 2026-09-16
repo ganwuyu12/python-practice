@@ -3,7 +3,7 @@ import requests
 from config import API_KEY, API_URL
 
 
-def chat(messages, max_retries=3):
+def chat(messages: list, max_retries: int = 3) -> str:
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"

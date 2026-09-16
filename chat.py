@@ -7,13 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("DEEPSEEK_API_KEY")
 
-def calc_cost(prompt_tokens, completion_tokens):
+def calc_cost(prompt_tokens: int, completion_tokens: int) -> float:
     input_price = 0.02/1e6
     output_price = 4/1e6
     total_price = prompt_tokens * input_price + completion_tokens * output_price
     return total_price
 
-def ask(prompt,max_retries=3):
+def ask(prompt: str, max_retries: int = 3) -> str:
     url = "https://api.deepseek.com/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
