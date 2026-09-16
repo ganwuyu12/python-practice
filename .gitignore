@@ -4,3 +4,4 @@ __pycache__/
 tempCodeRunnerFile.py
 chat_history.json
 .vscode/
+app.log

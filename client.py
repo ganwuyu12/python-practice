@@ -1,6 +1,14 @@
 import time
 import requests
+import logging
 from config import API_KEY, API_URL
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    filename="app.log",
+    encoding="utf-8",
+)
 
 
 def chat(messages: list, max_retries: int = 3) -> str:
@@ -28,7 +36,7 @@ def chat(messages: list, max_retries: int = 3) -> str:
                 return f"请求错误（不重试） : {e} 状态码: {status}"
             if attempt < max_retries - 1:
                 wait = 2 ** attempt
-                print(f"第 {attempt + 1} 次请求失败，错误: {e}. 正在等待 {wait} 秒后重试...")
+                logging.warning(f"第 {attempt + 1} 次请求失败，错误: {e}. 正在等待 {wait} 秒后重试...")
                 time.sleep(wait)
             else:
                 return f"请求失败: {e}. 已达到最大重试次数。"
