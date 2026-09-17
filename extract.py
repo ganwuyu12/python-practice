@@ -27,6 +27,13 @@ def validate(data: dict) -> None:
     missing = REQUIRED_KEYS - data.keys()
     if missing:
         raise ValueError(f"缺少字段或字段名不对: {missing}")
+    # 2. 不能全是 None
+    if all(v is None for v in data.values()):
+        raise ValueError("所有字段都是 None，提取失败")
+
+    # 3. gender 必须是 男/女
+    if data.get("gender") not in ("男", "女"):
+        raise ValueError(f"gender 不合法: {data.get('gender')}")
 
 
 def extract_with_retry(text: str, max_retries: int = 3) -> dict:
