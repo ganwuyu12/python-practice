@@ -4,11 +4,12 @@ from extract import extract_with_retry
 with open("samples.json", "r", encoding="utf-8") as f:
     samples = json.load(f)
 
-for i, text in enumerate(samples):
-    print(f"--- 样本 {i+1} ---")
-    print("输入:", text)
-    try:
-        result = extract_with_retry(text)
-        print("输出:", result)
-    except Exception as e:
-        print("失败:", e)
+for version in ("A", "B"):
+    success = 0
+    for text in samples:
+        try:
+            extract_with_retry(text, version=version)
+            success += 1
+        except Exception:
+            pass
+    print(f"版本 {version}: {success}/{len(samples)} 成功")
