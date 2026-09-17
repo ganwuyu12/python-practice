@@ -1,0 +1,12 @@
+[
+  {"question": "匹配逻辑是怎么实现的？", "expected_source": "match_server.cpp"},
+  {"question": "分数相近是怎么判断的？", "expected_source": "match_server.cpp"},
+  {"question": "超时机制是怎么做的？", "expected_source": "match_server.cpp"},
+  {"question": "epoll 是怎么用的？", "expected_source": "epoll_server.cpp"},
+  {"question": "客户端断开了怎么处理？", "expected_source": "epoll_server.cpp"},
+  {"question": "JSON 协议是怎么解析的？", "expected_source": "match_server.cpp"},
+  {"question": "心跳机制是怎么实现的？", "expected_source": "heartbeat_server.cpp"},
+  {"question": "线程模型是怎么设计的？", "expected_source": "thread_server.cpp"},
+  {"question": "匹配队列是什么数据结构？", "expected_source": "match_server.cpp"},
+  {"question": "五子棋前端是怎么实现的？", "expected_source": "index.html"}
+]

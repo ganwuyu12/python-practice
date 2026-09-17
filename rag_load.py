@@ -11,19 +11,20 @@ OUTPUT_DIR = Path("data")
 
 def load_and_split():
     chunks = []
-    step = CHUNK_SIZE - CHUNK_OVERLAP
-
     for f in DATA_DIR.iterdir():
         if not f.is_file():
             continue
         text = f.read_text(encoding="utf-8", errors="ignore")
 
-        for start in range(0, len(text), step):
-            chunk = text[start:start + CHUNK_SIZE]
-            chunks.append({"text": chunk, "source": f.name})
+        # 按空行切
+        parts = text.split("\n\n")
+        for part in parts:
+            part = part.strip()
+            if len(part) < 20:          # 太短的跳过
+                continue
+            chunks.append({"text": part, "source": f.name})
 
     return chunks
-
 
 def main():
     chunks = load_and_split()
