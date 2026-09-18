@@ -1,7 +1,5 @@
 import pytest
 from extract import parse_json
-import pytest
-from extract import parse_json, validate
 
 def test_validate_ok():
     data = {"name": "张三", "gender": "男", "birth_year": 1990, "email": "a@b.com"}
