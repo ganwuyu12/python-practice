@@ -1,9 +1,12 @@
-from rag_search import search
+from rag_search import Retriever
 from client import chat,LLMError
+from pathlib import Path
+
+retriever = Retriever(Path("data"))
 
 def build_rag_prompt(query: str, contexts: list) -> str:
     context_text = "\n\n".join(
-        f"[来源: {c['source']}]\n{c['text']}" for c in contexts
+        f"[来源: {c.source}]\n{c.text}" for c in contexts
     )
     return f"""基于以下资料回答问题。如果资料里没有答案，就说"资料中没有相关信息"。
 
@@ -14,7 +17,7 @@ def build_rag_prompt(query: str, contexts: list) -> str:
 """
 
 def rag_ask(query: str, top_k: int = 3) -> str:
-    contexts = search(query, top_k)
+    contexts = retriever.search(query, top_k)
     prompt = build_rag_prompt(query, contexts)
     messages = [{"role": "user", "content": prompt}]
     return chat(messages)

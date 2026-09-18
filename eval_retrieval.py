@@ -1,5 +1,8 @@
 import json
-from rag_search import search
+from pathlib import Path
+from rag_search import Retriever
+
+retriever = Retriever(Path("data"))
 
 with open("questions.json", "r", encoding="utf-8") as f:
     questions = json.load(f)
@@ -8,8 +11,8 @@ K = 3
 hits = 0
 
 for q in questions:
-    results = search(q["question"], top_k=K)
-    sources = [r["source"] for r in results]
+    results = retriever.search(q["question"], top_k=K)
+    sources = [r.source for r in results]
     hit = q["expected_source"] in sources
     hits += hit
     print(f"{'✅' if hit else '❌'} {q['question']}")
