@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from client import chat
+from client import chat,LLMError
 
 HISTORY_FILE = Path("chat_history.json")
 messages = []
@@ -17,7 +17,12 @@ def main():
                 json.dump(messages, f, ensure_ascii=False, indent=2)
             break
         messages.append({"role": "user", "content": user_input})
-        reply = chat(messages)
+        try:
+            reply = chat(messages)
+        except LLMError as e:
+            print(f"Error: {e}")
+            messages.pop()
+            continue
         messages.append({"role": "assistant", "content": reply})
         print(f"AI: {reply}")
 

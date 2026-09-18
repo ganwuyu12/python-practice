@@ -1,5 +1,5 @@
 from rag_search import search
-from client import chat
+from client import chat,LLMError
 
 def build_rag_prompt(query: str, contexts: list) -> str:
     context_text = "\n\n".join(
@@ -20,5 +20,8 @@ def rag_ask(query: str, top_k: int = 3) -> str:
     return chat(messages)
 
 if __name__ == '__main__':
-    answer = rag_ask("匹配逻辑是怎么实现的？")
-    print(answer)
+    try:
+        answer = rag_ask("匹配逻辑是怎么实现的？")
+        print(answer)
+    except LLMError as e:
+        print(f"Error: {e}")

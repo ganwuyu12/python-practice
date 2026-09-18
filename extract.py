@@ -1,5 +1,5 @@
 import json
-from client import chat
+from client import chat, LLMError
 
 REQUIRED_KEYS = {"name", "gender", "birth_year", "email"}
 
@@ -59,17 +59,18 @@ def extract_with_retry(text: str, version: str = "A", max_retries: int = 3) -> d
     messages = [{"role": "user", "content": build_prompt(text, version)}]
 
     for attempt in range(max_retries):
-        reply = chat(messages)
         try:
+            reply = chat(messages)          
             data = parse_json(reply)
             validate(data)
             return data
+        except LLMError:                   
+            raise
         except (json.JSONDecodeError, ValueError) as e:
             messages.append({"role": "assistant", "content": reply})
-            messages.append({"role": "user", "content": f"你上次输出有问题：{e}。请只输出纯 JSON，字段名必须用英文 name/gender/birth_year/email，gender 只能是男或女。"})
+            messages.append({"role": "user", "content": f"你上次输出有问题：{e}。请只输出纯 JSON..."})
 
     raise ValueError("多次重试仍无法解析")
-
 
 if __name__ == '__main__':
     text = "张三，男，1990年出生，邮箱 zhang@example.com"

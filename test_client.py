@@ -1,7 +1,7 @@
 from unittest.mock import patch, Mock
 import pytest
 import requests
-from client import chat
+from client import chat, LLMClientError, LLMTransientError
 
 
 def _fake_response(status_code=200, payload=None):
@@ -27,12 +27,14 @@ def test_chat_success(mock_post):
 @patch("client.requests.post")
 def test_chat_400_does_not_retry(mock_post):
     mock_post.return_value = _fake_response(status_code=400)
-    chat([{"role": "user", "content": "x"}])
-    assert mock_post.call_count == 1      # 4xx 不重试，只调一次
+    with pytest.raises(LLMClientError):
+        chat([{"role": "user", "content": "x"}])
+    assert mock_post.call_count == 1
 
 
 @patch("client.requests.post")
 def test_chat_429_retries(mock_post):
     mock_post.return_value = _fake_response(status_code=429)
-    chat([{"role": "user", "content": "x"}], max_retries=3)
-    assert mock_post.call_count == 3      # 429 重试，调三次
+    with pytest.raises(LLMTransientError):
+        chat([{"role": "user", "content": "x"}], max_retries=3)
+    assert mock_post.call_count == 3
