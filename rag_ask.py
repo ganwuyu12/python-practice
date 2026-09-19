@@ -23,6 +23,13 @@ def rag_ask(query: str, top_k: int = 3) -> str:
     return chat(messages)
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        filename="app.log",
+        encoding="utf-8",
+    )
     try:
         answer = rag_ask("匹配逻辑是怎么实现的？")
         print(answer)

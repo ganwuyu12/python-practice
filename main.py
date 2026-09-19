@@ -1,6 +1,14 @@
 import json
+import logging
 from pathlib import Path
 from client import chat,LLMError
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    filename="app.log",
+    encoding="utf-8",
+)
 
 HISTORY_FILE = Path("chat_history.json")
 messages = []
