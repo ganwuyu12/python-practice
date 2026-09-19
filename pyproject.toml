@@ -1,0 +1,16 @@
+[project]
+name = "python-practice"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.5.3",
+    "python-dotenv>=1.2.3",
+    "requests>=2.34.2",
+    "sentence-transformers>=6.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+]
