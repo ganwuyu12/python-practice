@@ -4,6 +4,9 @@ __pycache__/
 tempCodeRunnerFile.py
 chat_history.json
 .vscode/
-app.log
-data/
+*.log
 .venv/
+.pytest_cache/
+.mypy_cache/
+data/embeddings.npy
+data/chunks.json

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>五子棋 - 联机版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { text-align: center; font-family: Arial, sans-serif; background: #1a2a3a; color: #fff; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .login-area { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px; }
+        .login-area input { padding: 8px 15px; border-radius: 5px; border: none; font-size: 16px; }
+        .login-area button { padding: 8px 20px; background: #27ae60; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .login-area button:hover { background: #2ecc71; }
+        .game-area { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        canvas { background: #deb887; border: 2px solid #555; cursor: pointer; border-radius: 8px; }
+        .side-panel { flex: 1; min-width: 200px; max-width: 280px; text-align: left; background: #2c3e50; padding: 15px; border-radius: 8px; }
+        .side-panel h3 { margin-bottom: 10px; color: #f1c40f; }
+        #chatBox { height: 150px; overflow-y: auto; background: #1a2a3a; padding: 10px; border-radius: 5px; font-size: 14px; margin-bottom: 10px; }
+        #chatBox p { margin: 3px 0; color: #fff; }
+        .chat-input { display: flex; gap: 5px; }
+        .chat-input input { flex: 1; padding: 5px; border-radius: 3px; border: none; }
+        .chat-input button { padding: 5px 15px; background: #3498db; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+        #status { font-size: 18px; margin: 10px 0; }
+        .btn { padding: 10px 25px; font-size: 16px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-match { background: #e67e22; color: #fff; }
+        .btn-match:hover { background: #f39c12; }
+        .btn-rank { background: #8e44ad; color: #fff; }
+        .btn-rank:hover { background: #9b59b6; }
+        #rankList { background: #1a2a3a; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; display: none; margin-top: 10px; }
+        .rank-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #34495e; color: #fff; }
+        .user-info { font-size: 14px; color: #aaa; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎮 五子棋</h1>
+    <div class="login-area" id="loginArea">
+        <input type="text" id="usernameInput" placeholder="输入用户名" value="Player" />
+        <button onclick="login()">登录</button>
+        <button class="btn-rank" onclick="showRank()">🏆 排行榜</button>
+        <span id="userInfo" class="user-info"></span>
+    </div>
+    <div id="rankList"></div>
+    <div id="status">请先登录</div>
+    <div class="game-area">
+        <canvas id="board" width="540" height="540"></canvas>
+        <div class="side-panel">
+            <h3>💬 聊天</h3>
+            <div id="chatBox"></div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="输入消息..." />
+                <button onclick="sendChat()">发送</button>
+            </div>
+            <button class="btn btn-match" onclick="sendMatch()">🎯 匹配</button>
+        </div>
+    </div>
+</div>
+<script>
+const BOARD_SIZE = 15;
+const CELL_SIZE = 540 / (BOARD_SIZE + 1);
+const MARGIN = CELL_SIZE;
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const statusDiv = document.getElementById('status');
+const chatBox = document.getElementById('chatBox');
+const userInfo = document.getElementById('userInfo');
+
+let ws = null;
+let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+let myColor = 0, myTurn = false, gameOver = false, roomId = 0, lastMove = null;
+let userName = '', myRating = 1000, opponentName = '';
+
+function drawBoard() {
+    ctx.fillStyle = '#deb887';
+    ctx.fillRect(0, 0, 540, 540);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        const x = MARGIN + i * CELL_SIZE, y = MARGIN + i * CELL_SIZE;
+        ctx.beginPath(); ctx.moveTo(MARGIN, y); ctx.lineTo(MARGIN + (BOARD_SIZE-1)*CELL_SIZE, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, MARGIN); ctx.lineTo(x, MARGIN + (BOARD_SIZE-1)*CELL_SIZE); ctx.stroke();
+    }
+    const stars = [[7,7],[3,3],[11,3],[3,11],[11,11]];
+    for (let [r,c] of stars) {
+        const x = MARGIN + c * CELL_SIZE, y = MARGIN + r * CELL_SIZE;
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, 2*Math.PI); ctx.fill();
+    }
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (board[r][c] === 0) continue;
+            const x = MARGIN + c * CELL_SIZE, y = MARGIN + r * CELL_SIZE;
+            ctx.beginPath(); ctx.arc(x, y, CELL_SIZE/2 - 3, 0, 2*Math.PI);
+            ctx.fillStyle = board[r][c] === 1 ? '#000' : '#fff';
+            ctx.fill();
+            ctx.strokeStyle = board[r][c] === 1 ? '#000' : '#999';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+    if (lastMove) {
+        const [r,c] = lastMove;
+        const x = MARGIN + c * CELL_SIZE, y = MARGIN + r * CELL_SIZE;
+        ctx.beginPath(); ctx.arc(x, y, 5, 0, 2*Math.PI);
+        ctx.strokeStyle = '#f00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+function updateStatus(msg) { statusDiv.textContent = msg; }
+function addChat(msg) { const p = document.createElement('p'); p.textContent = msg; chatBox.appendChild(p); chatBox.scrollTop = chatBox.scrollHeight; }
+
+function handleMessage(data) {
+    try {
+        const resp = JSON.parse(data);
+        const cmd = resp.cmd;
+        if (cmd === 'login_ok') {
+            userName = resp.name; myRating = resp.rating;
+            userInfo.textContent = '👤 ' + userName + ' | 积分: ' + myRating;
+            updateStatus('登录成功！点击匹配');
+        } else if (cmd === 'login_fail') { updateStatus('登录失败: ' + resp.reason);
+        } else if (cmd === 'match_success') {
+            roomId = resp.room_id; myColor = resp.color === 'black' ? 1 : 2; myTurn = myColor === 1;
+            opponentName = resp.opponent || '对手';
+            updateStatus('配对成功！房间 ' + roomId + ' 你是' + (myColor===1?'黑棋':'白棋'));
+            board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+            gameOver = false; lastMove = null; drawBoard();
+            addChat('系统: 你和 ' + opponentName + ' 开始对局');
+        } else if (cmd === 'match_fail') { updateStatus('匹配失败: ' + (resp.reason || '超时'));
+        } else if (cmd === 'move_ok') {
+            board[resp.row][resp.col] = resp.player; lastMove = [resp.row, resp.col];
+            myTurn = false; drawBoard();
+        } else if (cmd === 'opponent_move') {
+            board[resp.row][resp.col] = resp.player; lastMove = [resp.row, resp.col];
+            myTurn = true; drawBoard();
+        } else if (cmd === 'game_over') {
+            gameOver = true;
+            board[resp.row][resp.col] = resp.winner === 'black' ? 1 : 2;
+            lastMove = [resp.row, resp.col]; drawBoard();
+            const winner = resp.winner === 'black' ? '黑棋' : '白棋';
+            updateStatus('🏆 ' + winner + '胜利！');
+            addChat('系统: ' + winner + ' 获胜！');
+            showRank();
+        } else if (cmd === 'opponent_quit') { updateStatus('对手已断开，你获胜！'); gameOver = true; addChat('系统: 对手断开连接');
+        } else if (cmd === 'chat_msg') { addChat(resp.msg);
+        } else if (cmd === 'rank_list') {
+            let html = '<div class="rank-item"><span>#</span><span>玩家</span><span>积分</span></div>';
+            resp.list.forEach(item => {
+                const h = item.name === userName ? ' style="color:#f1c40f;"' : '';
+                html += '<div class="rank-item"' + h + '><span>' + item.rank + '</span><span>' + item.name + '</span><span>' + item.score + '</span></div>';
+            });
+            document.getElementById('rankList').innerHTML = html;
+            document.getElementById('rankList').style.display = 'block';
+        } else if (cmd === 'error') { updateStatus('错误: ' + resp.msg); }
+    } catch(e) { console.error('parse error:', e); }
+}
+
+function connect() {
+    const host = window.location.hostname;
+    ws = new WebSocket('ws://' + host + ':8765');
+    ws.onopen = function() { updateStatus('已连接，请登录'); };
+    ws.onmessage = function(e) { handleMessage(e.data); };
+    ws.onclose = function() { updateStatus('断开连接'); };
+}
+
+function login() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { updateStatus('未连接'); return; }
+    const name = document.getElementById('usernameInput').value.trim() || 'Player' + Date.now();
+    ws.send(JSON.stringify({cmd: 'login', name: name}));
+}
+
+function sendMatch() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { updateStatus('未连接'); return; }
+    if (!userName) { updateStatus('请先登录'); return; }
+    board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+    gameOver = false; myTurn = false; lastMove = null; drawBoard();
+    ws.send(JSON.stringify({cmd: 'match', score: 1500}));
+    updateStatus('匹配中...');
+}
+
+function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg || !ws) return;
+    ws.send(JSON.stringify({cmd: 'chat', msg: msg}));
+    input.value = '';
+}
+
+function showRank() { if (ws) ws.send(JSON.stringify({cmd: 'rank'})); }
+
+canvas.onclick = function(e) {
+    if (gameOver || !myTurn || !ws) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * 540 / rect.width;
+    const y = (e.clientY - rect.top) * 540 / rect.height;
+    let col = Math.round((x - MARGIN) / CELL_SIZE);
+    let row = Math.round((y - MARGIN) / CELL_SIZE);
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return;
+    if (board[row][col] !== 0) return;
+    ws.send(JSON.stringify({cmd: 'move', row: row, col: col}));
+    myTurn = false;
+};
+
+document.getElementById('chatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendChat(); });
+connect();
+drawBoard();
+</script>
+</body>
+</html>
