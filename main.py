@@ -11,13 +11,15 @@ logging.basicConfig(
 )
 
 HISTORY_FILE = Path("chat_history.json")
-messages = []
 
-if HISTORY_FILE.exists() and HISTORY_FILE.stat().st_size > 0:
-    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-        messages = json.load(f)
+def load_history(path: Path) -> list:
+    if not path.exists() or path.stat().st_size == 0:
+        return []
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def main():
+    messages = load_history(HISTORY_FILE)
     while True:
         user_input = input("你: ")
         if user_input == "exit":
