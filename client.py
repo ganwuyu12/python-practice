@@ -22,6 +22,12 @@ class LLMClientError(LLMError):
 class LLMTransientError(LLMError):
     """429/5xx/超时：可重试，已耗尽重试次数"""
 
+def calc_cost(prompt_tokens: int, completion_tokens: int) -> float:
+    input_price = 0.02/1e6
+    output_price = 4/1e6
+    total_price = prompt_tokens * input_price + completion_tokens * output_price
+    return total_price
+
 
 def chat(messages: list, max_retries: int = 3) -> str:
     headers = {
@@ -50,3 +56,4 @@ def chat(messages: list, max_retries: int = 3) -> str:
                 time.sleep(wait)
             else:
                 raise LLMTransientError(f"重试 {max_retries} 次仍失败: {e}")
+    raise LLMTransientError("重试次数耗尽")

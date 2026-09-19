@@ -28,16 +28,16 @@ class Retriever:
 
     def _ensure_loaded(self) -> None:
         if self._vectors is None:
-            self._vectors = np.load(self.data_dir / "embeddings.npy")
-            self._vectors = self._vectors / np.linalg.norm(
-                self._vectors, axis=1, keepdims=True
-            )
+            vectors = np.load(self.data_dir / "embeddings.npy")
+            self._vectors = vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
             self._chunks = json.loads(
                 (self.data_dir / "chunks.json").read_text(encoding="utf-8")
             )
 
     def search(self, query: str, top_k: int = 3) -> list[Hit]:
         self._ensure_loaded()
+        assert self._vectors is not None
+        assert self._chunks is not None
         q = self.model.encode(query)
         q = q / np.linalg.norm(q)
         sims = self._vectors @ q

@@ -1,4 +1,4 @@
-from chat import calc_cost
+from client import calc_cost
 
 def test_calc_cost_zero():
     assert calc_cost(0, 0) == 0
