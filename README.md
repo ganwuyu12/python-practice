@@ -1,3 +1,4 @@
+[![CI](https://github.com/ganwuyu12/python-practice/actions/workflows/ci.yml/badge.svg)](https://github.com/ganwuyu12/python-practice/actions/workflows/ci.yml)
 # Python 练习项目
 
 ## 这是什么
