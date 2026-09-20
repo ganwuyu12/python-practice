@@ -10,3 +10,5 @@ chat_history.json
 .mypy_cache/
 data/embeddings.npy
 data/chunks.json
+data/*/embeddings.npy
+data/*/chunks.json
