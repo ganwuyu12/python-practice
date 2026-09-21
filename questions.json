@@ -27,6 +27,5 @@
   {"question": "README.md 中描述了项目的哪些功能特性以及如何编译运行？", "expected_source": "README.md"},
   {"question": "index.html 这个文件实现了什么功能？", "expected_source": "index.html"},
   {"question": "client.cpp 这个文件的作用是什么？", "expected_source": "client.cpp"},
-  {"question": "thread_server.cpp 这个文件采用了什么样的并发模型来处理客户端连接？", "expected_source": "thread_server.cpp"},
-  {"question": "server.log 日志文件记录了服务器的哪些运行事件？", "expected_source": "server.log"}
+  {"question": "thread_server.cpp 这个文件采用了什么样的并发模型来处理客户端连接？", "expected_source": "thread_server.cpp"}
 ]
