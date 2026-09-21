@@ -45,11 +45,21 @@ def load_and_split(split_fn) -> list[dict]:
             chunks.append({"text": part, "source": f.name})
     return chunks
 
+def load_summaries(summaries_path: Path) -> list[dict]:
+    """把每个文件的摘要当成一个特殊块"""
+    summaries = json.loads(summaries_path.read_text(encoding="utf-8"))
+    return [
+        {"text": f"[文件摘要] {text}", "source": filename}
+        for filename, text in summaries.items()
+    ]
+
 
 def build_index(split_fn, output_dir: Path) -> None:
     output_dir.mkdir(exist_ok=True)
     chunks = load_and_split(split_fn)
-    print(f"切出 {len(chunks)} 块")
+    summary_chunks = load_summaries(Path("data/summaries.json"))
+    chunks = summary_chunks + chunks          # ← 摘要放前面
+    print(f"切出 {len(chunks)} 块（含 {len(summary_chunks)} 个摘要）")
 
     model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
     texts = [c["text"] for c in chunks]
@@ -64,4 +74,4 @@ def build_index(split_fn, output_dir: Path) -> None:
 
 
 if __name__ == '__main__':
-    build_index(split_mixed, Path("data/mixed"))
+    build_index(split_fixed, Path("data/fixed"))
