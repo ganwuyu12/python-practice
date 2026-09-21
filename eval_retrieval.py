@@ -12,11 +12,13 @@ for name, data_dir in [
     ("blank", Path("data/blank")),
     ("mixed", Path("data/mixed")),
 ]:
-    retriever = Retriever(data_dir)
-    hits = 0
-    for q in questions:
-        results = retriever.search(q["question"], top_k=K)
-        sources = [r.source for r in results]
-        if q["expected_source"] in sources:
-            hits += 1
-    print(f"{name}: {hits}/{len(questions)} = {hits/len(questions):.0%}")
+    for use_rerank in [False, True]:
+        retriever = Retriever(data_dir, use_rerank=use_rerank)
+        hits = 0
+        for q in questions:
+            results = retriever.search(q["question"], top_k=K)
+            sources = [r.source for r in results]
+            if q["expected_source"] in sources:
+                hits += 1
+        tag = "rerank" if use_rerank else "no-rerank"
+        print(f"{name} [{tag}]: {hits}/{len(questions)} = {hits/len(questions):.0%}")
