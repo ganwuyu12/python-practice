@@ -29,3 +29,6 @@ Python 学习过程中的工程实践：模块化的 LLM 对话工具 + 信息�
 - Python 3.10+
 - DeepSeek API key（platform.deepseek.com 申请）
 - `.env` 需自己创建，不包含在仓库里
+
+## 文档
+- [RAG 检索优化记录](RAG_OPTIMIZATION.md)
