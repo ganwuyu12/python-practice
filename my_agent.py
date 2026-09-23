@@ -83,7 +83,7 @@ TOOLS = [
 def run_agent(user_input: str, max_turns: int = 8) -> str:
     logger.info(f"开始执行代理，用户输入: {user_input}")
     messages = [{"role": "user", "content": user_input}]
-    recent_calls = []                              # 记录最近的调用签名
+    recent_calls: list[str] = []                              # 记录最近的调用签名
     total_tokens = 0
 
     for turn in range(max_turns):

@@ -84,3 +84,4 @@ def chat_with_tools(messages: list, tools: list, max_retries: int = 3) -> dict:
                 time.sleep(wait)
             else:
                 raise LLMTransientError(f"重试 {max_retries} 次仍失败: {e}")
+    raise LLMTransientError("重试次数耗尽")
