@@ -34,6 +34,7 @@ TOOLS = [
 
 def run_agent(user_input: str, max_turns: int = 8) -> str:
     messages = [{"role": "user", "content": user_input}]
+    recent_calls = []                              # 记录最近的调用签名
 
     for turn in range(max_turns):
         message = chat_with_tools(messages, TOOLS)
@@ -47,19 +48,32 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
             name = call["function"]["name"]
             args = json.loads(call["function"]["arguments"])
 
+            # 生成签名：工具名 + 排序后的参数
+            signature = f"{name}:{json.dumps(args, sort_keys=True)}"
+
+            # 检查：这个签名在 recent_calls 里出现 3 次以上？
+            if recent_calls.count(signature) >= 3:
+                messages.append({
+                    "role": "user",
+                    "content": "你已经重复调用同一个工具多次，请换一种方式，或直接给出最终答案。"
+                })
+                continue                          # 跳过这次工具执行
+
+            # 执行工具
             if name == "search_docs":
                 result = search_docs(**args)
             else:
                 result = f"未知工具: {name}"
 
+            # 把结果和签名记录
             messages.append({
                 "role": "tool",
                 "tool_call_id": call["id"],
                 "content": result,
             })
+            recent_calls.append(signature)
 
     return "达到最大轮数"
-
 
 if __name__ == '__main__':
     answer = run_agent("帮我查一下 match_server.cpp 里的匹配逻辑")
