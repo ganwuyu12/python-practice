@@ -3,8 +3,10 @@ from pathlib import Path
 from client import chat_with_tools
 from rag_search import Retriever
 from read_file import read_file
+from write_file import write_file
 
 retriever = Retriever(Path("data/fixed"))
+OUTPUT_DIR = Path("data/output")
 
 
 def search_docs(query: str) -> str:
@@ -49,6 +51,27 @@ TOOLS = [
                 "required": ["filename"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "写入文件，将内容写入到指定的文件中",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "要写入的文件名"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要写入的内容"
+                    }
+                },
+                "required": ["filename", "content"]
+            }
+        }
     }
 ]
 
@@ -85,6 +108,8 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
                 result = search_docs(**args)
             elif name == "read_file":
                 result = read_file(**args)
+            elif name == "write_file":
+                result = write_file(**args)
             else:
                 result = f"未知工具: {name}"
 
@@ -99,5 +124,7 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
     return "达到最大轮数"
 
 if __name__ == '__main__':
-    answer = run_agent("帮我查一下 match_server.cpp 里的匹配逻辑")
+    answer = run_agent(
+        "读一下 match_server.cpp，把它的匹配逻辑总结成一段 Markdown，写入 summary.md"
+    )
     print(answer)
