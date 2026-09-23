@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from client import chat_with_tools
 from rag_search import Retriever
+from read_file import read_file
 
 retriever = Retriever(Path("data/fixed"))
 
@@ -23,9 +24,29 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "搜索关键词或问题"}
+                    "query": {
+                        "type": "string",
+                        "description": "搜索关键词或问题"
+                    }
                 },
                 "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "读取指定文件的完整内容，需要查看文件源码时使用",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "要读取的文件名，例如 match_server.cpp"
+                    }
+                },
+                "required": ["filename"]
             }
         }
     }
@@ -62,6 +83,8 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
             # 执行工具
             if name == "search_docs":
                 result = search_docs(**args)
+            elif name == "read_file":
+                result = read_file(**args)
             else:
                 result = f"未知工具: {name}"
 
