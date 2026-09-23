@@ -125,6 +125,6 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
 
 if __name__ == '__main__':
     answer = run_agent(
-        "读一下 match_server.cpp，把它的匹配逻辑总结成一段 Markdown，写入 summary.md"
+        "读一下 config.json 这个文件，告诉我它里面有什么配置"
     )
     print(answer)
