@@ -4,6 +4,9 @@ from client import chat_with_tools
 from rag_search import Retriever
 from read_file import read_file
 from write_file import write_file
+import logging
+
+logger = logging.getLogger(__name__)
 
 retriever = Retriever(Path("data/fixed"))
 OUTPUT_DIR = Path("data/output")
@@ -78,20 +81,25 @@ TOOLS = [
 
 
 def run_agent(user_input: str, max_turns: int = 8) -> str:
+    logger.info(f"开始执行代理，用户输入: {user_input}")
     messages = [{"role": "user", "content": user_input}]
     recent_calls = []                              # 记录最近的调用签名
     total_tokens = 0
-    
+
     for turn in range(max_turns):
         response = chat_with_tools(messages, TOOLS)
         message = response["choices"][0]["message"]
         usage = response["usage"]
         total_tokens += usage["total_tokens"]
 
+        logger.info(f"第 {turn + 1} 轮对话，输入 {usage['prompt_tokens']} tokens, 输出 {usage['completion_tokens']} tokens, 总计 {usage['total_tokens']} tokens, 累计总费用: ¥{total_tokens * 0.02 / 1e6:.6f}")
+
         if total_tokens > MAX_TOKENS:
+            logger.warning(f"达到 token 预算上限（{total_tokens}），已停止")
             return f"达到 token 预算上限（{total_tokens}），已停止"
 
         if not message.get("tool_calls"):
+            logger.info(f"任务结束，总轮数={turn+1}，总 tokens={total_tokens}")
             return message["content"]
 
         messages.append(message)
@@ -99,6 +107,8 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
         for call in message["tool_calls"]:
             name = call["function"]["name"]
             args = json.loads(call["function"]["arguments"])
+
+            logger.info(f"[轮 {turn+1}] 调用工具 {name}, 参数 {args}")
 
             # 生成签名：工具名 + 排序后的参数
             signature = f"{name}:{json.dumps(args, sort_keys=True)}"
@@ -132,6 +142,12 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
     return "达到最大轮数"
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        filename="agent.log",
+        encoding="utf-8",
+    )
     answer = run_agent(
         "读一下 config.json 这个文件，告诉我它里面有什么配置"
     )
