@@ -7,6 +7,7 @@ from write_file import write_file
 
 retriever = Retriever(Path("data/fixed"))
 OUTPUT_DIR = Path("data/output")
+MAX_TOKENS = 10000
 
 
 def search_docs(query: str) -> str:
@@ -79,9 +80,16 @@ TOOLS = [
 def run_agent(user_input: str, max_turns: int = 8) -> str:
     messages = [{"role": "user", "content": user_input}]
     recent_calls = []                              # 记录最近的调用签名
-
+    total_tokens = 0
+    
     for turn in range(max_turns):
-        message = chat_with_tools(messages, TOOLS)
+        response = chat_with_tools(messages, TOOLS)
+        message = response["choices"][0]["message"]
+        usage = response["usage"]
+        total_tokens += usage["total_tokens"]
+
+        if total_tokens > MAX_TOKENS:
+            return f"达到 token 预算上限（{total_tokens}），已停止"
 
         if not message.get("tool_calls"):
             return message["content"]

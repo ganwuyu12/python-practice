@@ -3,12 +3,7 @@ import requests
 import logging
 from config import API_KEY, API_URL
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    filename="app.log",
-    encoding="utf-8",
-)
+logger = logging.getLogger(__name__)
 
 
 class LLMError(Exception):
@@ -52,8 +47,40 @@ def chat(messages: list, max_retries: int = 3) -> str:
                 raise LLMClientError(f"请求错误（不重试）: {e} 状态码: {status}")
             if attempt < max_retries - 1:
                 wait = 2 ** attempt
-                logging.warning(f"第 {attempt + 1} 次请求失败，错误: {e}. 正在等待 {wait} 秒后重试...")
+                logger.warning(f"第 {attempt + 1} 次请求失败，错误: {e}. 正在等待 {wait} 秒后重试...")
                 time.sleep(wait)
             else:
                 raise LLMTransientError(f"重试 {max_retries} 次仍失败: {e}")
     raise LLMTransientError("重试次数耗尽")
+
+
+
+def chat_with_tools(messages: list, tools: list, max_retries: int = 3) -> dict:
+    """带工具调用的聊天，返回完整的 message 对象"""
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "deepseek-chat",
+        "messages": messages,
+        "tools": tools,
+    }
+
+    for attempt in range(max_retries):
+        response = None
+        try:
+            response = requests.post(API_URL, headers=headers, json=data, timeout=30)
+            response.raise_for_status()
+            response_dict = response.json()
+            return response_dict      # ← 返回完整 message
+        except requests.RequestException as e:
+            status = response.status_code if response is not None else None
+            if status is not None and 400 <= status < 500 and status != 429:
+                raise LLMClientError(f"请求错误（不重试）: {e} 状态码: {status}")
+            if attempt < max_retries - 1:
+                wait = 2 ** attempt
+                logger.warning(f"第 {attempt + 1} 次请求失败，错误: {e}. 正在等待 {wait} 秒后重试...")
+                time.sleep(wait)
+            else:
+                raise LLMTransientError(f"重试 {max_retries} 次仍失败: {e}")
