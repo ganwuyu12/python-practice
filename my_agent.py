@@ -78,6 +78,11 @@ def write_file(filename: str, content: str) -> str:
     except OSError as e:
         return f"写入失败: {filename}，错误: {e}"
 
+@tool(description="列出本地语料目录下的所有文件名，需要知道有哪些文件时使用", params={})
+def list_files() -> str:
+    files = [f.name for f in DATA_DIR.iterdir() if f.is_file()]
+    return "\n".join(files)
+
 def run_agent(user_input: str, max_turns: int = 8) -> str:
     logger.info(f"开始执行代理，用户输入: {user_input}")
     messages = [{"role": "user", "content": user_input}]
@@ -126,6 +131,8 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
                 result = read_file(**args)
             elif name == "write_file":
                 result = write_file(**args)
+            elif name == "list_files":
+                result = list_files()
             else:
                 result = f"未知工具: {name}"
 
@@ -147,6 +154,6 @@ if __name__ == '__main__':
         encoding="utf-8",
     )
     answer = run_agent(
-        "读一下 config.json 这个文件，告诉我它里面有什么配置"
+    "先看看有哪些文件，然后告诉我 match_server.cpp 和 heartbeat_server.cpp 这两个文件分别是干嘛的"
     )
     print(answer)
