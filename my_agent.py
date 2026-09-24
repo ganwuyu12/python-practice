@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 retriever = Retriever(Path("data/fixed"))
 OUTPUT_DIR = Path("data/output")
-MAX_TOKENS = 10000
+MAX_TOKENS = 50000
 
 def tool(description: str,params: dict):
     """装饰器，用于注册工具函数"""
@@ -19,12 +19,15 @@ def tool(description: str,params: dict):
         sig = inspect.signature(func)
         properties = {}
         required = []
+        # 类型映射表：Python 类型 → JSON Schema 类型
+        type_map = {int: "integer", float: "number", str: "string", bool: "boolean"}
         for name, param in sig.parameters.items():
             properties[name] = {
-                "type": "string",
+                "type": type_map.get(param.annotation, "string"),
                 "description": params.get(name,"")
             }
-            required.append(name)
+            if param.default is inspect.Parameter.empty:    # ← 加这行
+                required.append(name)
 
         TOOL_REGISTRY.append({
             "type": "function",
@@ -54,13 +57,17 @@ def search_docs(query: str) -> str:
 DATA_DIR = Path("data/game_match_server")
 
 
-@tool(description="读取本地文件内容", params={"filename": "要读取的文件名"})
-def read_file(filename: str) -> str:
+@tool(description="读取文件的指定区间内容", params={
+    "filename": "要读取的文件名",
+    "start": "起始字符位置，默认 0",
+    "limit": "读取长度，默认 2000",
+})
+def read_file(filename: str, start: int = 0, limit: int = 2000) -> str:
     path = DATA_DIR / filename
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
-            return content[:2000]
+        return content[start:start+limit]
     except OSError as e:
         return f"文件 {filename} 读取失败: {e}"
 
