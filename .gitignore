@@ -12,3 +12,4 @@ data/embeddings.npy
 data/chunks.json
 data/*/embeddings.npy
 data/*/chunks.json
+data/output/

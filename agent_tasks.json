@@ -1,0 +1,12 @@
+[
+  {"question": "先看看有哪些文件，然后告诉我哪个文件实现了心跳检测，把它的关键常量也读出来"},
+  {"question": "match_server.cpp 和 heartbeat_server.cpp 的匹配逻辑有什么不同？分别用了什么数据结构？"},
+  {"question": "从客户端连接、到匹配成功、到进入房间，这条链路经过了哪些文件和函数？"},
+  {"question": "读一下 match_server.cpp，总结它的核心逻辑，写入 summary.md"},
+  {"question": "读一下 config.json，如果不存在，告诉我这个项目的配置放在哪里"},
+  {"question": "epoll_server.cpp 和 thread_server.cpp 分别用什么并发模型？哪个更适合高并发场景？为什么？"},
+  {"question": "先列出所有文件，然后找出所有 .py 文件，告诉我它们各自的作用"},
+  {"question": "heartbeat_server.cpp 里的五子棋胜负判断是怎么实现的？它检查了几个方向？"},
+  {"question": "process_server.cpp 和 thread_server.cpp 都是并发服务器，它们处理客户端连接的方式有什么不同？"},
+  {"question": "这个项目里，客户端和服务器之间用什么协议通信？请找出所有涉及协议定义的文件和关键代码"}
+]
