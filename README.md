@@ -32,3 +32,4 @@ Python 学习过程中的工程实践：模块化的 LLM 对话工具 + 信息�
 
 ## 文档
 - [RAG 检索优化记录](RAG_OPTIMIZATION.md)
+- [Agent 评测报告](AGENT_EVAL.md)
