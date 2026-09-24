@@ -2,9 +2,10 @@ import json
 from pathlib import Path
 from client import chat_with_tools
 from rag_search import Retriever
-from read_file import read_file
-from write_file import write_file
 import logging
+import inspect
+
+TOOL_REGISTRY: list[dict] = []
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,36 @@ retriever = Retriever(Path("data/fixed"))
 OUTPUT_DIR = Path("data/output")
 MAX_TOKENS = 10000
 
+def tool(description: str,params: dict):
+    """装饰器，用于注册工具函数"""
+    def decorator(func):
+        sig = inspect.signature(func)
+        properties = {}
+        required = []
+        for name, param in sig.parameters.items():
+            properties[name] = {
+                "type": "string",
+                "description": params.get(name,"")
+            }
+            required.append(name)
 
+        TOOL_REGISTRY.append({
+            "type": "function",
+            "function": {
+                "name": func.__name__,
+                "description": description,
+                "parameters": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": required
+                }
+            }
+
+        })
+        return func
+    return decorator
+
+@tool(description="搜索本地算法题解文档，回答关于题解内容的问题时使用", params={"query": "搜索关键词或问题"})
 def search_docs(query: str) -> str:
     """搜索本地文档"""
     hits = retriever.search(query, top_k=3)
@@ -21,64 +51,32 @@ def search_docs(query: str) -> str:
     return "\n\n".join(f"[来源: {h.source}]\n{h.text}" for h in hits)
 
 
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "search_docs",
-            "description": "搜索本地算法题解文档，回答关于题解内容的问题时使用",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "搜索关键词或问题"
-                    }
-                },
-                "required": ["query"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "读取指定文件的完整内容，需要查看文件源码时使用",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "filename": {
-                        "type": "string",
-                        "description": "要读取的文件名，例如 match_server.cpp"
-                    }
-                },
-                "required": ["filename"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "写入文件，将内容写入到指定的文件中",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "filename": {
-                        "type": "string",
-                        "description": "要写入的文件名"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "要写入的内容"
-                    }
-                },
-                "required": ["filename", "content"]
-            }
-        }
-    }
-]
+DATA_DIR = Path("data/game_match_server")
 
+
+@tool(description="读取本地文件内容", params={"filename": "要读取的文件名"})
+def read_file(filename: str) -> str:
+    path = DATA_DIR / filename
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+            return content[:2000]
+    except OSError as e:
+        return f"文件 {filename} 读取失败: {e}"
+
+
+OUTPUT_DIR = Path("data/output")
+
+
+@tool(description="写入本地文件内容", params={"filename": "要写入的文件名", "content": "要写入的内容"})
+def write_file(filename: str, content: str) -> str:
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    path = OUTPUT_DIR / filename
+    try:
+        path.write_text(content, encoding="utf-8")
+        return f"已写入 {filename}，共 {len(content)} 字符"
+    except OSError as e:
+        return f"写入失败: {filename}，错误: {e}"
 
 def run_agent(user_input: str, max_turns: int = 8) -> str:
     logger.info(f"开始执行代理，用户输入: {user_input}")
@@ -87,7 +85,7 @@ def run_agent(user_input: str, max_turns: int = 8) -> str:
     total_tokens = 0
 
     for turn in range(max_turns):
-        response = chat_with_tools(messages, TOOLS)
+        response = chat_with_tools(messages, TOOL_REGISTRY)
         message = response["choices"][0]["message"]
         usage = response["usage"]
         total_tokens += usage["total_tokens"]
